@@ -1,22 +1,22 @@
 /*************************************************************
- *   CapraClock - Orologio WiFi con ESP32 e matrice LED
- *   Hardware: ESP32 + matrice LED WS2812B 8x32
- *   Librerie necessarie:
- *     - Adafruit GFX, Adafruit NeoMatrix, Adafruit NeoPixel
- *     - CapraFont (font personalizzato)
- *     - WiFi (inclusa nell’ESP32)
+ * CapraClock - WiFi Clock with ESP32 and LED matrix
+ * Hardware: ESP32 + WS2812B 8x32 LED matrix
+ * Required Libraries:
+ * - Adafruit GFX, Adafruit NeoMatrix, Adafruit NeoPixel
+ * - CapraFont (custom font)
+ * - WiFi (included with ESP32)
  *************************************************************/
 
 /*************************************************************
- *  | GPIO | UTILIZZO    |
- *  |------|-------------|
- *  |  32  | MATRICE LED |
- *  |  22  |  SCL (Temp) |
- *  |  21  |  SDA (Temp) |
- *  |  04  | LUMINOSITA  |
+ * | GPIO | USAGE        |
+ * |------|--------------|
+ * |  32  | LED MATRIX   |
+ * |  22  | SCL (Temp)   |
+ * |  21  | SDA (Temp)   |
+ * |  04  | BRIGHTNESS   |
  *************************************************************/
 
-// ==== LIBRERIE ==== 
+// ==== LIBRARIES ==== 
 #include <Adafruit_GFX.h>
 #include <Adafruit_NeoMatrix.h>
 #include <Adafruit_NeoPixel.h>
@@ -30,7 +30,7 @@
 #include <Wire.h>
 #include <Adafruit_HTU21DF.h>
 
-// ==== IMPOSTAZIONI ==== 
+// ==== SETTINGS ==== 
 #include "wifi_settings.h"
 
 
@@ -44,86 +44,86 @@ Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix(
   NEO_GRB + NEO_KHZ800
 );
 
-// Posizione orologio
+// Clock position on the matrix
 int positionClock = 2;
 
-// Durata visualizzazione schermate
-unsigned long screenDuration[] = {600, 10, 10};  // [secondi]
+// Screen display duration
+unsigned long screenDuration[] = {600, 10, 10};  // [seconds]
 const int numScreens = sizeof(screenDuration) / sizeof(screenDuration[0]);
 unsigned long lastSwitch = 0;
 int currentScreen = 0;
 
-// Luminosità
-int brightnessDayHigh   = 30;    // Luminosità alta durante il giorno
-int brightnessDayLow    = 20;    // Luminosità bassa durante il giorno
-int brightnessNightHigh = 20;    // Luminosità alta durante la notte
-int brightnessNightLow  = 3;     // Luminosità bassa durante la notte
+// Brightness levels
+int brightnessDayHigh   = 30;   // High brightness during the day
+int brightnessDayLow    = 20;   // Low brightness during the day
+int brightnessNightHigh = 20;   // High brightness during the night
+int brightnessNightLow  = 3;    // Low brightness during the night
 
 int currentBrightness = brightnessDayLow;
 
-// Colori (r,g,b)
-uint32_t backgroundTimeDay     = matrix.Color( 14, 152, 227);  // Sfondo ora
-uint32_t backgroundTimeNight   = matrix.Color(0,     0,   0);
-uint32_t timeColorDay          = matrix.Color(255, 255, 255);  // Colore ora
-uint32_t timeColorNight        = matrix.Color(255,   0,   0);
+// Colors (r,g,b)
+uint32_t backgroundTimeDay     = matrix.Color( 14, 152, 227);  // Time background color (Day)
+uint32_t backgroundTimeNight   = matrix.Color(0,     0,   0);  // Time background color (Night)
+uint32_t timeColorDay          = matrix.Color(255, 255, 255);  // Time text color (Day)
+uint32_t timeColorNight        = matrix.Color(255,   0,   0);  // Time text color (Night)
 
-uint32_t backgroundDateDay     = matrix.Color( 14, 152, 227);  // Sfondo data
-uint32_t backgroundDateNight   = matrix.Color(0,     0,   0);
-uint32_t dateColorDay          = matrix.Color(255, 255, 255);  // Colore data
-uint32_t dateColorNight        = matrix.Color(255,   0,   0);
+uint32_t backgroundDateDay     = matrix.Color( 14, 152, 227);  // Date background color (Day)
+uint32_t backgroundDateNight   = matrix.Color(0,     0,   0);  // Date background color (Night)
+uint32_t dateColorDay          = matrix.Color(255, 255, 255);  // Date text color (Day)
+uint32_t dateColorNight        = matrix.Color(255,   0,   0);  // Date text color (Night)
 
-uint32_t backgroundTempDay     = matrix.Color( 14, 152, 227);  // Sfondo temperatura
-uint32_t backgroundTempNight   = matrix.Color(0,     0,   0);  // e umidità
-uint32_t tempColorDay          = matrix.Color(255, 255, 255);  // Colore temperatura
-uint32_t tempColorNight        = matrix.Color(255,   0,   0);  // e umidità
+uint32_t backgroundTempDay     = matrix.Color( 14, 152, 227);  // Temperature/Humidity background color (Day)
+uint32_t backgroundTempNight   = matrix.Color(0,     0,   0);  // Temperature/Humidity background color (Night)
+uint32_t tempColorDay          = matrix.Color(255, 255, 255);  // Temperature/Humidity text color (Day)
+uint32_t tempColorNight        = matrix.Color(255,   0,   0);  // Temperature/Humidity text color (Night)
 
-uint32_t dayColorDay           = matrix.Color(255, 255, 255);  // Colore giorno della
-uint32_t dayColorNight         = matrix.Color(255,   0,   0);  // settimana presente
-uint32_t notDayColorDay        = matrix.Color( 80,  80,  80);  // Colore altri giorni
-uint32_t notDayColorNight      = matrix.Color(172,   0,   0);  // della settimana
+uint32_t dayColorDay           = matrix.Color(255, 255, 255);  // Current weekday indicator color (Day)
+uint32_t dayColorNight         = matrix.Color(255,   0,   0);  // Current weekday indicator color (Night)
+uint32_t notDayColorDay        = matrix.Color( 80,  80,  80);  // Other weekdays indicator color (Day)
+uint32_t notDayColorNight      = matrix.Color(172,   0,   0);  // Other weekdays indicator color (Night)
 
-bool dayColors = true; // true = usa colori notte
+bool dayColors = true; // true = use day colors, false = use night colors (Note: Original comment was confusing)
 
 
-// ==== SENSORE LUMINOSITA ===
+// ==== LUMINOSITY SENSOR ===
 const unsigned int LUX_PIN = 34;
 int luminosita = 0;
 
-unsigned long tempLuxInterval = 1;
+unsigned long tempLuxInterval = 1; // Read interval (seconds)
 unsigned long lastLuxRead = 0;
 
 unsigned int thresholdLuxDay = 1500;
 unsigned int thresholdLuxNight = 1500;
 
 
-// ==== SENSORE TEMPERATURA E UMIDITA ==== 
+// ==== TEMPERATURE AND HUMIDITY SENSOR ==== 
 Adafruit_HTU21DF htu = Adafruit_HTU21DF();
 float temp = 0;
 float hum = 0;
 
-float tempOffset = 0;   // Offset per tarare la lettura del
-float humOffset = 0;    // sensore di temperatura e umidità
+float tempOffset = 0;    // Offset for temperature sensor calibration
+float humOffset = 0;     // Offset for humidity sensor calibration
 
-unsigned long tempReadInterval = 60;
+unsigned long tempReadInterval = 60; // Read interval (seconds)
 unsigned long lastTempRead = 0;
 
-// Buffer per formattare temperatura e umidita
+// Buffer for formatting temperature and humidity string
 String tempStr;
 
 
-// ==== WEBSERVER E IMPOSTAZIONI ==== 
+// ==== WEBSERVER AND SETTINGS ==== 
 WebServer server(80);
 Preferences preferences;
 
 
 // ==== WIFI ====
-// Timeout massimo per tentare la connessione WiFi (ms)
+// Maximum timeout to attempt WiFi connection (ms)
 const unsigned long timeoutConnection = 10000;
 const unsigned int MAXSSIDFOUND = 10;
 
 const int sizeHomeSSID = sizeof(HomeSSID) / sizeof(HomeSSID[0]);
 
-// Buffer reti trovate
+// Buffers for found networks
 String foundSSID[MAXSSIDFOUND];
 String foundPASS[MAXSSIDFOUND];
 int foundRSSI[MAXSSIDFOUND];
@@ -132,23 +132,23 @@ String connectedSSID;
 bool connected = false;
 
 
-// ==== DATA E ORA ==== 
-// Server NTP
+// ==== DATE AND TIME ==== 
+// NTP Servers
 const char* ntpServer1 = "pool.ntp.org";
 const char* ntpServer2 = "time.nist.gov";
 const char* ntpServer3 = "time.google.com";
 
-// Fuso orario italiano (ora legale inclusa)
+// Italian time zone (including DST)
 const char* timeZoneItaly = "CET-1CEST,M3.5.0,M10.5.0/3";
 
-// Sincronizzazione ogni 10 minuti (600 sec)
+// Synchronization every 10 minutes (600 sec)
 unsigned long syncInterval = 600;
 unsigned long lastSync = 0;
 
-// Offset per correzione secondi
+// Offset for second correction
 int timeOffset = -2;
 
-// Orari giorno/notte (HH:MM)
+// Day/Night start times (HH:MM)
 int dayStartHour     = 7;
 int dayStartMinute   = 0;
 int nightStartHour   = 22;
@@ -157,7 +157,7 @@ int nightStartMinute = 0;
 struct tm timeinfo;
 time_t now;
 
-// Buffer per formattare orari e date
+// Buffer for formatting time and date strings
 char timeStr[9];
 
 
@@ -165,18 +165,18 @@ char timeStr[9];
 void setup() {
   delay(2000);
 
-  // Serial debug
+  // Serial debug initialization
   Serial.begin(115200);
   while (!Serial) delay(1000);
 
-  // Inizializzo LittleFS
+  // Initialize LittleFS
   mountLittleFS();
   
-  // Carico impostazioni salvate
+  // Load saved settings
   loadSettings();
 
-  // Inizializzo la matrice
-  Serial.println("Inizializzo display...");
+  // Initialize the LED matrix
+  Serial.println("Initializing display...");
   matrix.begin();
   background(0);
   matrix.setFont(&CapraFont);
@@ -184,36 +184,36 @@ void setup() {
   matrix.setBrightness(brightnessDayHigh);
   matrix.setTextColor(timeColorDay);
 
-  // Inizializzo wifi
+  // Initialize WiFi
   WiFi.mode(WIFI_STA);
   WiFi.disconnect(true);
 
-  // Scansione reti e connessione
+  // Scan networks and attempt connection
   scanWifi();
   sortByRSSI();
   tryConnection();
 
-  // Sincronizzo orario
+  // Synchronize time
   syncTime();
 
-  // Inizializzo sensore temperatura e umidita
+  // Initialize temperature and humidity sensor
   initTempHum();
   readTempHum();
 
-  // Sensore luminosità
+  // Luminosity sensor setup
   analogReadResolution(12);
   updateBrightnessAndColors();
 
-  // Avvio server web
+  // Start web server
   server.on("/", handleRoot);
   server.on("/save", HTTP_POST, handleSave);
   server.begin();
-  Serial.println("Webserver avviato.");
+  Serial.println("Webserver started.");
 
-  // Scrivo il logo 
+  // Display logo 
   scrollText("CapraClock");
 
-  // // Mostro prime schermate
+  // // Show initial screens
   // showTime();
   // showDay();
 }
@@ -221,27 +221,29 @@ void setup() {
 
 // ==== LOOP ==== 
 void loop() {
-   // Sincronizza orario periodicamente
+    // Synchronize time periodically
   if (millis() - lastSync > syncInterval * 1000) 
     syncTime();
 
-  // Cambio schermata
+  // Switch screen display
   if (millis() - lastSwitch >= screenDuration[currentScreen] * 1000) {
     currentScreen = (currentScreen + 1) % numScreens;
     lastSwitch = millis();
   }
 
+  // Read temperature and humidity periodically
   if (millis() - lastTempRead >= tempReadInterval * 1000){
     readTempHum();
     lastTempRead = millis();
   }
 
+  // Update brightness and colors based on light level
   if (millis() - lastLuxRead >= tempLuxInterval * 1000){
     updateBrightnessAndColors();
     lastLuxRead = millis();
   }
 
-  // Mostro schermata corrente
+  // Display current screen
   switch (currentScreen) {
     case 0: 
       showTime(); 
@@ -258,17 +260,17 @@ void loop() {
   }
   matrix.show();
 
-  // Gestione del web server
+  // Handle web server requests
   server.handleClient();
 
-  // delay(1);
+  // delay(1); // Small delay for loop stability (often not needed with ESP32)
 }
 
 
-// ==== FUNZIONI LUMINOSITA ==== 
+// ==== BRIGHTNESS FUNCTIONS ==== 
 void readLux(){
   luminosita = analogRead(LUX_PIN);
-}  
+}   
 
 void updateBrightnessAndColors() {
   readLux();
@@ -281,24 +283,24 @@ void updateBrightnessAndColors() {
     } else {
       currentBrightness = brightnessDayHigh;
     }
-    dayColors = true;  // di giorno usa sempre colori giorno
+    dayColors = true;   // Use day colors during the day
   } else {
     if (luminosita < thresholdLuxNight) {
       currentBrightness = brightnessNightLow;
-      dayColors = false;   // poca luce = colori notte
+      dayColors = false;   // Low light at night = use night colors
     } else {
       currentBrightness = brightnessNightHigh;
-      dayColors = true;  // tanta luce = colori giorno (anche se è notte)
+      dayColors = true;   // High light at night = use day colors (e.g., if a light is turned on)
     }
   }
 }
 
 
-// ==== FUNZIONI TEMPERATURA E UMIDITA ==== 
+// ==== TEMPERATURE AND HUMIDITY FUNCTIONS ==== 
 void initTempHum(){
   if (!htu.begin()) {
-    Serial.println("HTU21D non trovato");
-    while (1) scrollText("No sensore trovato");
+    Serial.println("HTU21D not found");
+    while (1) scrollText("No sensor found"); // Loop indefinitely showing error
   }
 }
 
@@ -306,16 +308,17 @@ void readTempHum(){
   temp = htu.readTemperature();
   hum = htu.readHumidity();
 
-  temp += tempOffset;
-  hum += humOffset;
+  temp += tempOffset; // Apply calibration offset
+  hum += humOffset;   // Apply calibration offset
 
-  Serial.print("Temperatura = ");
+  Serial.print("Temperature = ");
   Serial.print(temp);
-  Serial.print("\t Umidita = ");
+  Serial.print("\t Humidity = ");
   Serial.println(hum);
 }
 
 void showTempHum() {
+  // Format string: Temp° Hum%
   tempStr = String(temp,1) + String("\xB0 ") + String(hum,0) + String("%");
 
   matrix.setBrightness(currentBrightness);
@@ -326,39 +329,45 @@ void showTempHum() {
 }
 
 
-// ==== FUNZIONI ORA/DATA ==== 
+// ==== TIME/DATE FUNCTIONS ==== 
 void syncTime() {
-  Serial.print("Sincronizzo ora... ");
+  Serial.print("Synchronizing time... ");
+  // Configure time zone and start NTP client
   configTzTime(timeZoneItaly, ntpServer1, ntpServer2, ntpServer3);
 
+  // Get current time structure
+  getLocalTime(&timeinfo); 
   strftime(timeStr, sizeof(timeStr), "%H:%M:%S", &timeinfo);
   Serial.println(timeStr);
 
   lastSync = millis();
 }
 
+// Check if current time is within the defined "daytime" period
 bool isDaytime(struct tm *t) {
   int currentMinutes = t->tm_hour * 60 + t->tm_min;
   int dayStart   = dayStartHour * 60 + dayStartMinute;
   int nightStart = nightStartHour * 60 + nightStartMinute;
 
   if (dayStart < nightStart) {
-    // Caso normale: giorno dentro la stessa giornata (es. 07:00–22:00)
+    // Normal case: daytime within the same day (e.g., 07:00–22:00)
     return (currentMinutes >= dayStart && currentMinutes < nightStart);
   } else {
-    // Caso inverso: giorno attraversa la mezzanotte (es. 22:00–07:00)
+    // Inverted case: daytime crosses midnight (e.g., 22:00–07:00)
     return (currentMinutes >= dayStart || currentMinutes < nightStart);
   }
 }
 
 
-// ==== FUNZIONI SCHERMATE ====
+// ==== SCREEN DISPLAY FUNCTIONS ====
 void showTime() {
   if (getLocalTime(&timeinfo)) {
+    // Apply time offset for minor adjustments
     time(&now);
     now += timeOffset;
     localtime_r(&now, &timeinfo);
 
+    // Format time string (HH:MM:SS)
     strftime(timeStr, sizeof(timeStr), "%H:%M:%S", &timeinfo);
 
     matrix.setBrightness(currentBrightness);
@@ -367,7 +376,7 @@ void showTime() {
     matrix.setTextColor(dayColors ? timeColorDay : timeColorNight);
     matrix.print(timeStr);
   } else {
-    Serial.println("Errore: impossibile ottenere l'ora.");
+    Serial.println("Error: Unable to get time.");
     matrix.clear();
     matrix.show();
   }
@@ -384,22 +393,25 @@ void showDate() {
     matrix.setTextColor(dayColors ? dateColorDay : dateColorNight);
     matrix.print(dateStr);
   } else {
-    Serial.println("Errore: impossibile ottenere la data.");
+    Serial.println("Error: Unable to get date.");
     matrix.clear();
     matrix.show();
   }
 }
 
+// Displays a bar indicating the day of the week
 void showDay() {
   if (getLocalTime(&timeinfo)) {
     int rectWidth = 3;
     int rectHeight = 1;
     int spacing = 1;
     int startX = positionClock;
-    int y = 7; // ultima riga
+    int y = 7; // last row
 
     matrix.setBrightness(currentBrightness);
 
+    // tm_wday is 0 (Sunday) to 6 (Saturday). We map 0..6 to 7 blocks.
+    // (timeinfo.tm_wday + 6) % 7 maps Monday (1) to block 0, Tuesday (2) to block 1, ..., Sunday (0) to block 6.
     for (int d = 0; d <= 6; d++) {
       int x = startX + d * (rectWidth + spacing);
       uint32_t color = (d == (timeinfo.tm_wday + 6) % 7) ? (dayColors ? dayColorDay : dayColorNight) : (dayColors ? notDayColorDay : notDayColorNight);
@@ -407,23 +419,27 @@ void showDay() {
       matrix.fillRect(x, y, rectWidth, rectHeight, color);
     }
   } else {
-    Serial.println("Errore: impossibile ottenere il giorno");
+    Serial.println("Error: Unable to get weekday");
     matrix.clear();
     matrix.show();
   }
 }
 
 
+// Fills the screen background, leaving the bottom row clear for the day indicator.
 void background(uint32_t color){
   int rectWidth = 3;
   int rectHeight = 1;
   int spacing = 1;
   int startX = positionClock;
-  int y = 7; // ultima riga
+  int y = 7; // last row
 
   matrix.setBrightness(currentBrightness);
+  // Fill the main display area (rows 0-6)
   matrix.fillRect(0,0,matrix.width(),matrix.height()-1, color);
 
+  // Fill the empty spaces on the bottom row (row 7) for a uniform look
+  // These fill regions are complex due to the showDay implementation
   matrix.fillRect(0, y, startX, rectHeight, color);
   matrix.fillRect(startX+rectWidth*1+spacing*0, y, spacing, rectHeight, color);
   matrix.fillRect(startX+rectWidth*2+spacing*1, y, spacing, rectHeight, color);
@@ -435,25 +451,25 @@ void background(uint32_t color){
 }
 
 
-// ==== FUNZIONI IMPOSTAZIONI ==== 
-void loadSettings() {   // Default settings
+// ==== SETTINGS FUNCTIONS ==== 
+void loadSettings() {   // Load settings from Preferences (with defaults)
   preferences.begin("settings", true);
 
-  // Posizione orologio
+  // Clock position
   positionClock       = preferences.getUInt("positionClock", positionClock);
 
-  // Durata visualizzazione schermate
+  // Screen display duration
   screenDuration[0]   = preferences.getUInt("screenClock", screenDuration[0]);
   screenDuration[1]   = preferences.getUInt("screenDate", screenDuration[1]);
   screenDuration[2]   = preferences.getUInt("screenTemp", screenDuration[2]);
 
-  // Luminosità
+  // Brightness levels
   brightnessDayHigh   = preferences.getUInt("brightnessDayHigh", brightnessDayHigh);
   brightnessDayLow    = preferences.getUInt("brightnessDayLow", brightnessDayLow);
   brightnessNightHigh = preferences.getUInt("brightnessNightHigh", brightnessNightHigh);
   brightnessNightLow  = preferences.getUInt("brightnessNightLow", brightnessNightLow);
 
-  // Colori (r,g,b)
+  // Colors (r,g,b)
   backgroundTimeDay   = preferences.getUInt("backgroundTimeDay", backgroundTimeDay);
   backgroundTimeNight = preferences.getUInt("backgroundTimeNight", backgroundTimeNight);
   timeColorDay        = preferences.getUInt("timeColorDay", timeColorDay);
@@ -474,21 +490,21 @@ void loadSettings() {   // Default settings
   notDayColorDay      = preferences.getUInt("notDayColorDay", notDayColorDay);
   notDayColorNight    = preferences.getUInt("dayColorNight", notDayColorNight);
 
-  // Luminosita
+  // Luminosity settings
   thresholdLuxDay     = preferences.getUInt("thresholdLuxDay", thresholdLuxDay);
   thresholdLuxNight   = preferences.getUInt("thresholdLuxNight", thresholdLuxNight);
 
-  // Temperatura e umidita
+  // Temperature and humidity offsets
   tempOffset          = preferences.getUInt("tempOffset", tempOffset);
   humOffset           = preferences.getUInt("humOffset", humOffset);
 
   tempReadInterval    = preferences.getInt("tempReadInterval", tempReadInterval);
 
-  // Data e ora
+  // Time and Date settings
   syncInterval        = preferences.getUInt("syncInterval", syncInterval);
   timeOffset          = preferences.getInt("timeOffset", timeOffset);
 
-  // Orari (formato HH:MM)
+  // Day/Night start times (HH:MM format)
   dayStartHour        = preferences.getUInt("dayStartHour", dayStartHour);
   dayStartMinute      = preferences.getUInt("dayStartMinute", dayStartMinute);
   nightStartHour      = preferences.getUInt("nightStartHour", nightStartHour);
@@ -497,24 +513,24 @@ void loadSettings() {   // Default settings
   preferences.end();
 }
 
-void saveSettings() {
+void saveSettings() { // Save settings to Preferences
   preferences.begin("settings", false);
 
-  // Posizione orologio
+  // Clock position
   preferences.putUInt("positionClock", positionClock);
   
-  // Durata visualizzazione schermate
+  // Screen display duration
   preferences.putUInt("screenClock", screenDuration[0]);
   preferences.putUInt("screenDate", screenDuration[1]);
   preferences.putUInt("screenTemp", screenDuration[2]);
 
-  // Luminosità
+  // Brightness levels
   preferences.putUInt("brightnessDayHigh", brightnessDayHigh);
   preferences.putUInt("brightnessDayLow", brightnessDayLow);
   preferences.putUInt("brightnessNightHigh", brightnessNightHigh);
   preferences.putUInt("brightnessNightLow", brightnessNightLow);
 
-  // Colori (r,g,b)
+  // Colors (r,g,b)
   preferences.putUInt("backgroundTimeDay", backgroundTimeDay);
   preferences.putUInt("backgroundTimeNight", backgroundTimeNight);
   preferences.putUInt("timeColorDay", timeColorDay);
@@ -535,21 +551,21 @@ void saveSettings() {
   preferences.putUInt("notDayColorDay", notDayColorDay);
   preferences.putUInt("notDayColorNight", notDayColorNight);
 
-  // Luminosita
+  // Luminosity settings
   preferences.putUInt("thresholdLuxDay", thresholdLuxDay);
   preferences.putUInt("thresholdLuxNight", thresholdLuxNight);
 
-  // Temperatura e umidita
+  // Temperature and humidity offsets
   preferences.putUInt("tempOffset", tempOffset);
   preferences.putUInt("humOffset", humOffset);
 
   preferences.putUInt("tempReadInterval", tempReadInterval);
 
-  // Data e ora
+  // Time and Date settings
   preferences.putUInt("syncInterval", syncInterval);
   preferences.putInt("timeOffset", timeOffset);
 
-  // Orari (formato HH:MM)
+  // Day/Night start times (HH:MM format)
   preferences.putUInt("dayStartHour", dayStartHour);
   preferences.putUInt("dayStartMinute", dayStartMinute);
   preferences.putUInt("nightStartHour", nightStartHour);
@@ -562,53 +578,53 @@ void saveSettings() {
 // ==== LITTLE FS ==== 
 void mountLittleFS(){
   if (!LittleFS.begin()) {
-    Serial.println("Errore LittleFS");
+    Serial.println("LittleFS Error");
     return;
   }
 
-  // Lista file presenti in LittleFS
-  Serial.println("File presenti in LittleFS:");
+  // List files present in LittleFS
+  Serial.println("Files present in LittleFS:");
   File root = LittleFS.open("/");
   if (!root || !root.isDirectory()) {
-    Serial.println("Errore: root non valido");
+    Serial.println("Error: Invalid root directory");
   } else {
     File file = root.openNextFile();
     while (file) {
-      Serial.printf(" - %s (%d byte)\n", file.name(), file.size());
+      Serial.printf(" - %s (%d bytes)\n", file.name(), file.size());
       file = root.openNextFile();
     }
   }
 }
 
 
-// ==== FUNZIONI WEB SERVER ==== 
+// ==== WEB SERVER FUNCTIONS ==== 
 void handleRoot() {
   String html;
   File file = LittleFS.open("/index.html", "r");
   if (!file) {
-    server.send(500, "text/plain", "Errore: file HTML non trovato");
+    server.send(500, "text/plain", "Error: HTML file not found");
     return;
   }
 
   html = file.readString();
   file.close();
-  // Sostituisco i segnaposto con valori reali
+  // Replace placeholders with current values
 
-  // Posizione orologio
+  // Clock position
   html.replace("%POSITION_CLOCK%", String(positionClock));
 
-  // Durata visualizzazione schermate
+  // Screen display duration
   html.replace("%SCREEN_CLOCK%", String(screenDuration[0]));
   html.replace("%SCREEN_DATE%", String(screenDuration[1]));
   html.replace("%SCREEN_TEMP%", String(screenDuration[2]));
   
-  // Luminosità
+  // Brightness levels
   html.replace("%BRIGHTNESS_DAY_HIGH%", String(brightnessDayHigh));
   html.replace("%BRIGHTNESS_DAY_LOW%", String(brightnessDayLow));
   html.replace("%BRIGHTNESS_NIGHT_HIGH%", String(brightnessNightHigh));
   html.replace("%BRIGHTNESS_NIGHT_LOW%", String(brightnessNightLow));
 
-  // Colori (r,g,b)
+  // Colors (r,g,b) in hex format
   html.replace("%TIME_BACKGROUND_COLOR_DAY%", toHexColor(backgroundTimeDay));
   html.replace("%TIME_BACKGROUND_COLOR_NIGHT%", toHexColor(backgroundTimeNight));
   html.replace("%TIME_COLOR_DAY%", toHexColor(timeColorDay));
@@ -629,21 +645,21 @@ void handleRoot() {
   html.replace("%NOT_DAY_COLOR_DAY%", toHexColor(notDayColorDay));
   html.replace("%NOT_DAY_COLOR_NIGHT%", toHexColor(notDayColorNight));
 
-  // Luminosita
+  // Luminosity thresholds
   html.replace("%THRESHOLD_LUX_DAY%", String(thresholdLuxDay));
   html.replace("%THRESHOLD_LUX_NIGHT%", String(thresholdLuxNight));
 
-  // Temperatura e umidita
+  // Temperature and humidity offsets
   html.replace("%TEMP_OFFSET%", String(tempOffset));
   html.replace("%HUM_OFFSET%", String(humOffset));
   
   html.replace("%TEMP_INTERVAL%", String(tempReadInterval));
 
-  // Data e ora
+  // Time and Date settings
   html.replace("%SYNC_INTERVAL%", String(syncInterval));
   html.replace("%TIME_OFFSET%", String(timeOffset));
 
-  // Orari (formato HH:MM)
+  // Day/Night start times (HH:MM format)
   char buf[6];
   sprintf(buf, "%02d:%02d", dayStartHour, dayStartMinute);
   html.replace("%DAY_START%", String(buf));
@@ -654,23 +670,23 @@ void handleRoot() {
 }
 
 void handleSave() {
-  // Lettura e salvataggio dei valori numerici
+  // Read and save numerical values
 
-  // Posizione orologio
+  // Clock position
   positionClock       = server.arg("positionClock").toInt();
 
-  // Durata visualizzazione schermate
+  // Screen display duration
   screenDuration[0]   = server.arg("screenClock").toInt();
   screenDuration[1]   = server.arg("screenDate").toInt();
   screenDuration[2]   = server.arg("screenTemp").toInt();
 
-  // Luminosità
+  // Brightness levels
   brightnessDayHigh   = server.arg("brightnessDayHigh").toInt();
   brightnessDayLow    = server.arg("brightnessDayLow").toInt();
   brightnessNightHigh = server.arg("brightnessNightHigh").toInt();
   brightnessNightLow  = server.arg("brightnessNightLow").toInt();
 
-  // Colori (r,g,b)
+  // Colors (r,g,b) - convert HTML hex to matrix format
   backgroundTimeDay   = htmlColorToMatrix(server.arg("backgroundTimeDay"));
   backgroundTimeNight = htmlColorToMatrix(server.arg("backgroundTimeNight"));
   timeColorDay        = htmlColorToMatrix(server.arg("timeColorDay"));
@@ -691,21 +707,21 @@ void handleSave() {
   notDayColorDay      = htmlColorToMatrix(server.arg("notDayColorDay"));
   notDayColorNight    = htmlColorToMatrix(server.arg("notDayColorNight"));
 
-  // Luminosita
+  // Luminosity thresholds
   thresholdLuxDay     = server.arg("thresholdLuxDay").toInt();
   thresholdLuxNight   = server.arg("thresholdLuxNight").toInt();
 
-  // Temperatura e umidita
+  // Temperature and humidity offsets
   tempOffset          = server.arg("tempOffset").toInt();
   humOffset           = server.arg("humOffset").toInt();
 
   tempReadInterval    = server.arg("tempReadInterval").toInt();
 
-  // Data e ora
+  // Time and Date settings
   syncInterval        = server.arg("syncInterval").toInt();
   timeOffset          = server.arg("timeOffset").toInt();
 
-  // Orari (formato HH:MM)
+  // Day/Night start times (HH:MM format)
   if (server.hasArg("dayStart")) {
     sscanf(server.arg("dayStart").c_str(), "%d:%d", &dayStartHour, &dayStartMinute);
   }
@@ -715,10 +731,12 @@ void handleSave() {
 
   saveSettings();
 
+  // Redirect to root after saving
   server.sendHeader("Location", "/");
   server.send(303);
 }
 
+// Converts HTML color string (e.g., "#RRGGBB") to NeoMatrix color format
 uint32_t htmlColorToMatrix(String hexColor) {
   if (hexColor[0] == '#') hexColor = hexColor.substring(1);
   long value = strtol(hexColor.c_str(), NULL, 16);
@@ -728,13 +746,14 @@ uint32_t htmlColorToMatrix(String hexColor) {
   return matrix.Color(r, g, b);
 }
 
+// Converts a matrix color (uint16_t in 565 format) to HTML hex color string (#RRGGBB)
 String toHexColor(uint16_t color565) {
-  // Estraggo i componenti RGB da 565
+  // Extract RGB components from 565 format
   uint8_t r5 = (color565 >> 11) & 0x1F;
   uint8_t g6 = (color565 >> 5)  & 0x3F;
   uint8_t b5 = color565 & 0x1F;
 
-  // Converto in 8 bit (0-255)
+  // Convert to 8-bit components (0-255)
   uint8_t r8 = (r5 * 255) / 31;
   uint8_t g8 = (g6 * 255) / 63;
   uint8_t b8 = (b5 * 255) / 31;
@@ -746,22 +765,22 @@ String toHexColor(uint16_t color565) {
 }
 
 
-// ==== FUNZIONI WIFI ==== 
+// ==== WIFI FUNCTIONS ==== 
 void scanWifi() {
-  Serial.println("Scansione reti WiFi...");
+  Serial.println("Scanning WiFi networks...");
   int n = WiFi.scanNetworks();
-  Serial.printf("Trovate %d reti.\n", n);
+  Serial.printf("Found %d networks.\n", n);
 
   if (n == 0) {
-    Serial.println("Nessuna rete WiFi trovata.");
-    while (true) scrollText("No WiFi trovato");
+    Serial.println("No WiFi networks found.");
+    while (true) scrollText("No WiFi found"); // Fatal error loop
   }
 
-  // Salvo solo le reti di casa trovate
+  // Save only the configured "home" networks found
   for (int i = 0; i < n && foundCount < MAXSSIDFOUND; i++) {
     for (int k = 0; k < sizeHomeSSID; k++) {
       if (WiFi.SSID(i) == HomeSSID[k]) {
-        Serial.printf("Trovata rete %s (RSSI=%ld)\n", WiFi.SSID(i).c_str(), WiFi.RSSI(i));
+        Serial.printf("Found home network %s (RSSI=%ld)\n", WiFi.SSID(i).c_str(), WiFi.RSSI(i));
         foundSSID[foundCount] = WiFi.SSID(i);
         foundRSSI[foundCount] = WiFi.RSSI(i);
         foundCount++;
@@ -771,16 +790,17 @@ void scanWifi() {
   }
 
   if (foundCount == 0) {
-    Serial.println("Nessuna rete WiFi di casa trovata.");
-    while (true) scrollText("No WiFi Casa trovato");
+    Serial.println("No configured home WiFi networks found.");
+    while (true) scrollText("No Home WiFi found"); // Fatal error loop
   }
 
   WiFi.scanDelete();
 }
 
+// Sorts found networks by RSSI (signal strength) in descending order
 void sortByRSSI() {
-  Serial.println("Ordino reti per potenza...");
-  // Bubble sort decrescente
+  Serial.println("Sorting networks by signal strength...");
+  // Bubble sort descending
   for (int i = 0; i < foundCount - 1; i++) {
     for (int j = 0; j < foundCount - i - 1; j++) {
       if (foundRSSI[j] < foundRSSI[j+1]) {
@@ -793,9 +813,10 @@ void sortByRSSI() {
     Serial.printf("%d) %s (RSSI=%ld)\n", i+1, foundSSID[i].c_str(), (long)foundRSSI[i]);
 }
 
+// Attempts connection to networks in sorted order
 void tryConnection() {
   for (int i = 0; i < foundCount; i++) {
-    Serial.printf("Connessione a %s...\n", foundSSID[i].c_str());
+    Serial.printf("Connecting to %s...\n", foundSSID[i].c_str());
     WiFi.disconnect(true);
     delay(100);
     WiFi.begin(foundSSID[i].c_str(), HomePASS);
@@ -804,28 +825,29 @@ void tryConnection() {
     while (millis() - start < timeoutConnection) {
       if (WiFi.status() == WL_CONNECTED) {
         connectedSSID = foundSSID[i];
-        Serial.printf("Connesso a %s - IP: %s\n", connectedSSID.c_str(), WiFi.localIP().toString().c_str());
+        Serial.printf("Connected to %s - IP: %s\n", connectedSSID.c_str(), WiFi.localIP().toString().c_str());
         scrollText(connectedSSID + String(" - ") + WiFi.localIP().toString());
-        return;
+        return; // Success
       }
     }
-    Serial.printf("Connessione a %s fallita.\n", foundSSID[i].c_str());
+    Serial.printf("Connection to %s failed.\n", foundSSID[i].c_str());
   }
 
   if (!connected) {
-    Serial.println("Connessione con tutte le reti fallita.");
-    while (true) scrollText("Non connesso");
+    Serial.println("Connection with all networks failed.");
+    while (true) scrollText("Not connected"); // Fatal error loop
   }
 }
 
 
-// ==== FUNZIONE TESTO SCORREVOLE ==== 
+// ==== SCROLLING TEXT FUNCTION ==== 
 void scrollText(String text) {
   int textSize = text.length();
   int x = matrix.width();
 
-  Serial.printf("Scrivo a schermo: %s\n", text.c_str());
+  Serial.printf("Displaying scrolling text: %s\n", text.c_str());
 
+  // Scroll until text is fully off screen (4 pixels per character)
   while (x > -(textSize * 4)) {
     background(0);
     matrix.setBrightness(brightnessDayHigh);
@@ -836,51 +858,3 @@ void scrollText(String text) {
     delay(40);
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
