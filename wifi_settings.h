@@ -1,22 +1,6 @@
 #pragma once
 
 // ==== WiFi ====
-// SSID e Password reti wifi
-const char* HomeSSID[] = {"",};
-const char* HomePASS   = "";  // Password comune
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// WiFi SSIDs and Password (Home networks)
+const char* HomeSSID[] = {"",""};
+const char* HomePASS   = "";        // Common Password for all WiFi
