@@ -21,9 +21,6 @@ Follow the guide at this [*link*](https://docs.espressif.com/projects/arduino-es
 After that, you need to install the *plugin* to load the files into the *ESP32* memory.  
 Follow the guide at this [*link*](https://randomnerdtutorials.com/arduino-ide-2-install-esp32-littlefs/)  
 
-Before uploading the firmware, go to **Tools -> Erase all flash before sketch upload** on the Arduino IDE and *enable* it.  
-Then upload the HTML page to the ESP32 memory.
-
 ## Settings
 To change the *Wi-Fi network* to which the clock will be connected, open the **wifi_settings.h** file and change the *SSID* and *password*. 
 
@@ -34,6 +31,8 @@ You can also enable or disable screen data, temperature/humidity, or the logo at
 
 ## Upload
 Open the **CapraClock.ino** with the *Arduino IDE* file and upload the code.  
+
+Go to **Tools -> Erase all flash before sketch upload** on the Arduino IDE and *enable* it.  
 
 Now, you need to upload the contents of the data folder to the *ESP32* memory.  
 Press **CTRL+SHIFT+P** and search for *"Upload LittleFS to Pico/ESP8266/ESP32"* and press **ENTER**.
