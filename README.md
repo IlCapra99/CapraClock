@@ -18,7 +18,7 @@ Connections are the following:
 From the *Arduino IDE*, first of all you need to install support for *ESP32* boards.  
 Follow the guide at this [*link*](https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html#windows-manual-installation).  
 
-After that, you need to install the *plugin* to load the files into the *ESP32* memory.  
+After that, you need to install the *plugin* to upload the files into the *ESP32* memory.  
 Follow the guide at this [*link*](https://randomnerdtutorials.com/arduino-ide-2-install-esp32-littlefs/)  
 
 ## Settings
