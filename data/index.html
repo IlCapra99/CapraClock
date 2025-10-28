@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CapraClock Settings</title>
+  <script src="https://cdn.jsdelivr.net/npm/@jaames/iro@5"></script>
+  <style>
+    /* ... CSS styles remain the same (as they are functional/structural) ... */
+    /* Only the values used in the HTML will be translated below for clarity */
+    
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: #e0e0e0;
+      display: flex;
+      height: 100vh;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    * { box-sizing: border-box; }
+
+    aside {
+      width: 300px;
+      background: #1f1f1f;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 20px;
+      box-shadow: 2px 0 5px #000;
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+
+    aside header img {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 250px;
+      height: auto;
+      margin-bottom: 10px;
+    }
+
+    aside.closed { width: 90px; }
+    aside.closed nav, aside.closed header img { display: none; }
+
+    #toggle-sidebar {
+      font-size: 50px;
+      background: #1f1f1f;
+      border: none;
+      color: #bbb;
+      cursor: pointer;
+      border-radius: 5px;
+      margin-top: 15px;
+      transition: all 0.2s ease;
+    }
+
+    #toggle-sidebar:hover { 
+      background: #505050; 
+      color: #fff; 
+    }
+
+    aside nav {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+    }
+
+    aside nav button {
+      width: 100%;
+      padding: 15px 20px;
+      background: none;
+      border: none;
+      color: #bbb;
+      font-size: 40px;
+      font-weight: bold;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s ease;
+    }
+    aside nav button.active {
+      color: #fff;
+      background: #333;
+      font-size: 50px;
+    }
+
+    main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    #main-title {
+      font-size: 90px;
+      font-weight: bold;
+      margin: 20px 0;
+      text-align: center;
+      position: relative;
+    }
+    #main-title::after {
+      content: "";
+      display: block;
+      width: 100%;
+      height: 4px;
+      background: #333;
+      margin-top: 8px;
+      box-shadow: 0 5px 10px rgba(0,0,0,0.5);
+    }
+
+    .tab { display: none; }
+    .tab.active { display: block; }
+
+    form label {
+      display: block;
+      margin: 10px 0 5px;
+      font-weight: bold;
+      font-size: 40px;
+      color: #ccc;
+    }
+
+    form input[type="number"],
+    form input[type="time"],
+    form input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      border: 2px solid #333;
+      border-radius: 5px;
+      background: #1e1e1e;
+      color: #fff;
+      font-size: 30px;
+    }
+
+    hr.divider {
+      border: none;
+      border-top: 2px solid #333;
+      margin: 25px 0;
+      width: 100%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .submenu {
+      width: 100%;
+    }
+
+    .parent-btn {
+      width: 100%;
+      padding: 15px 20px;
+      background: none;
+      border: none;
+      color: #bbb;
+      font-size: 40px;
+      font-weight: bold;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .parent-btn:hover {
+      background: #333;
+      color: #fff;
+    }
+
+    .arrow {
+      transition: transform 0.3s ease;
+      display: inline-block;
+    }
+
+    .submenu-items {
+      display: flex;
+      flex-direction: column;
+      max-height: 0;
+      overflow: hidden;
+      margin-left: 20px;
+      transition: max-height 0.4s ease;
+    }
+
+    .submenu.open .submenu-items {
+      max-height: 300px;
+    }
+
+    .submenu.open .arrow {
+      transform: rotate(180deg);
+    }
+
+    .submenu-items button {
+      font-size: 30px;
+      padding: 10px 15px;
+      color: #aaa;
+      background: none;
+      border: none;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .submenu-items button:hover {
+      background: #333;
+      color: #fff;
+    }
+
+
+
+    /* COLOR PICKER */
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 40px;
+    }
+
+    .color-editor {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .color-editor label {
+      font-size: 40px;
+      margin-bottom: 10px;
+      color: #ccc;
+      text-align: center;
+    }
+
+    .color-picker {
+      margin-bottom: 10px;
+    }
+
+    .color-editor input[type="text"] {
+      width: 150px;
+      text-align: center;
+      font-size: 25px;
+      border: 1px solid #333;
+      border-radius: 5px;
+      background: #1e1e1e;
+      color: #fff;
+      padding: 6px;
+    }
+
+    /* PULSANTE SALVA */
+    input[type="submit"] {
+      margin-top: 25px;
+      background: #108b24;
+      border: none;
+      color: white;
+      padding: 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      width: 100%;
+      font-weight: bold;
+      font-size: 45px;
+    }
+    input[type="submit"]:hover { 
+      background: #0b5c18;
+    }
+
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 20px 0;
+      padding: 0 5px; /* Aggiunge un po' di spazio */
+    }
+    .setting-row label {
+      margin: 0; /* Sovrascrive il margine di default */
+    }
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+    }
+    .toggle-switch input { 
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #333;
+      transition: .4s;
+      border-radius: 34px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #108b24; /* Verde come il pulsante Salva */
+    }
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+
+  </style>
+</head>
+<body>
+  <aside id="sidebar">
+    <header>
+      <img src="data:image/png;base64,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NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQ0QjuWMJDvDm/a7082Qzu/IxT/+NDCbOQUcIsZFTBESGjC4OQOjuM4juP4d+d37TiOpzm/a8dxPM35XTvO42nO79pxHE9zftf+v//O+R+9keP24P/b+P9fOQc+3oVBHwffI79rx3E8zfldO47jac7v2nEcT3N+1/7/B+zVn+E7jK+PAAAAAElFTkSuQmCC" alt="CapraClock">
+      <button id="toggle-sidebar" onclick="toggleSidebar()">&#9776;</button>
+    </header>
+
+    <nav>
+      <div class="submenu">
+        <button id="btn-colori" class="parent-btn" onclick="toggleSubmenu()">
+          Colors <span class="arrow">▼</span>
+        </button>
+        <div id="submenu-colori" class="submenu-items">
+          <button id="btn-scritte" onclick="openTab('colori-scritte', 'Colors - Text')">Text</button>
+          <button id="btn-sfondi" onclick="openTab('colori-sfondi', 'Colors - Backgrounds')">Backgrounds</button>
+        </div>
+      </div>
+
+      <button id="btn-orari" onclick="openTab('orari', 'Time')">Time</button>
+      <button id="btn-luminosita" onclick="openTab('luminosita', 'Brightness')">Brightness</button>
+      <button id="btn-display" onclick="openTab('display', 'Display')">Display</button>
+      <button id="btn-sistema" onclick="openTab('sistema', 'System')">System</button>
+      <button id="btn-temperatura" onclick="openTab('temperatura', 'Temperature')">Temperature</button>
+    </nav>
+  </aside>
+
+  <main id="main-content">
+    <h1 id="main-title"></h1>
+    <form action="/save" method="POST">
+      <input type="submit" value="Save">
+      
+      <div id="colori-scritte" class="tab">
+        <div class="color-grid">
+          <div class="color-editor">
+            <label>Time Text (Day)</label>
+            <div id="color-picker-timeDay" class="color-picker"></div>
+            <input type="text" id="timeColorDayText" name="timeColorDay" value="%TIME_COLOR_DAY%">
+          </div>
+          <div class="color-editor">
+            <label>Time Text (Night)</label>
+            <div id="color-picker-timeNight" class="color-picker"></div>
+            <input type="text" id="timeColorNightText" name="timeColorNight" value="%TIME_COLOR_NIGHT%">
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="color-grid">
+          <div class="color-editor">
+            <label>Date Text (Day)</label>
+            <div id="color-picker-dateDay" class="color-picker"></div>
+            <input type="text" id="dateColorDayText" name="dateColorDay" value="%DATE_COLOR_DAY%">
+          </div>
+          <div class="color-editor">
+            <label>Date Text (Night)</label>
+            <div id="color-picker-dateNight" class="color-picker"></div>
+            <input type="text" id="dateColorNightText" name="dateColorNight" value="%DATE_COLOR_NIGHT%">
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="color-grid">
+          <div class="color-editor">
+            <label>Temp/Hum Text (Day)</label>
+            <div id="color-picker-tempDay" class="color-picker"></div>
+            <input type="text" id="tempColorDayText" name="tempColorDay" value="%TEMP_COLOR_DAY%">
+          </div>
+          <div class="color-editor">
+            <label>Temp/Hum Text (Night)</label>
+            <div id="color-picker-tempNight" class="color-picker"></div>
+            <input type="text" id="tempColorNightText" name="tempColorNight" value="%TEMP_COLOR_NIGHT%">
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="color-grid">
+          <div class="color-editor">
+            <label>Active Day Indicator (Day)</label>
+            <div id="color-picker-dayActiveDay" class="color-picker"></div>
+            <input type="text" id="dayColorTextDay" name="dayColorDay" value="%DAY_COLOR_DAY%">
+          </div>
+          <div class="color-editor">
+            <label>Active Day Indicator (Night)</label>
+            <div id="color-picker-dayActiveNight" class="color-picker"></div>
+            <input type="text" id="dayColorTextNight" name="dayColorNight" value="%DAY_COLOR_NIGHT%">
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="color-grid">
+          <div class="color-editor">
+            <label>Inactive Day Indicator (Day)</label>
+            <div id="color-picker-dayInactiveDay" class="color-picker"></div>
+            <input type="text" id="notDayColorTextDay" name="notDayColorDay" value="%NOT_DAY_COLOR_DAY%">
+          </div>
+          <div class="color-editor">
+            <label>Inactive Day Indicator (Night)</label>
+            <div id="color-picker-dayInactiveNight" class="color-picker"></div>
+            <input type="text" id="notDayColorTextNight" name="notDayColorNight" value="%NOT_DAY_COLOR_NIGHT%">
+          </div>
+        </div>
+      </div>
+
+      
+      <div id="colori-sfondi" class="tab">
+        <div class="color-grid">
+          <div class="color-editor">
+            <label>Time Background (Day)</label>
+            <div id="color-picker-background-timeDay" class="color-picker"></div>
+            <input type="text" id="timeColorDayBackground" name="backgroundTimeDay" value="%TIME_BACKGROUND_COLOR_DAY%">
+          </div>
+          <div class="color-editor">
+            <label>Time Background (Night)</label>
+            <div id="color-picker-background-timeNight" class="color-picker"></div>
+            <input type="text" id="timeColorNightBackground" name="backgroundTimeNight" value="%TIME_BACKGROUND_COLOR_NIGHT%">
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="color-grid">
+          <div class="color-editor">
+            <label>Date Background (Day)</label>
+            <div id="color-picker-background-dateDay" class="color-picker"></div>
+            <input type="text" id="dateColorDayBackground" name="backgroundDateDay" value="%DATE_BACKGROUND_COLOR_DAY%">
+          </div>
+          <div class="color-editor">
+            <label>Date Background (Night)</label>
+            <div id="color-picker-background-dateNight" class="color-picker"></div>
+            <input type="text" id="dateColorNightBackground" name="backgroundDateNight" value="%DATE_BACKGROUND_COLOR_NIGHT%">
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="color-grid">
+          <div class="color-editor">
+            <label>Temp/Hum Background (Day)</label>
+            <div id="color-picker-background-tempDay" class="color-picker"></div>
+            <input type="text" id="tempColorDayBackground" name="backgroundTempDay" value="%TEMP_BACKGROUND_COLOR_DAY%">
+          </div>
+          <div class="color-editor">
+            <label>Temp/Hum Background (Night)</label>
+            <div id="color-picker-background-tempNight" class="color-picker"></div>
+            <input type="text" id="tempColorNightBackground" name="backgroundTempNight" value="%TEMP_BACKGROUND_COLOR_NIGHT%">
+          </div>
+        </div>
+      </div>
+
+
+      <div id="orari" class="tab">
+        <label>Day Start Time</label>
+        <input type="time" name="dayStart" value="%DAY_START%">
+        <label>Night Start Time</label>
+        <input type="time" name="nightStart" value="%NIGHT_START%">
+      </div>
+
+      <div id="luminosita" class="tab">
+        <label>Day Brightness (High)</label>
+        <input type="number" name="brightnessDayHigh" value="%BRIGHTNESS_DAY_HIGH%">
+        <label>Day Brightness (Low)</label>
+        <input type="number" name="brightnessDayLow" value="%BRIGHTNESS_DAY_LOW%">
+
+        <hr class="divider">
+
+        <label>Night Brightness (High)</label>
+        <input type="number" name="brightnessNightHigh" value="%BRIGHTNESS_NIGHT_HIGH%">
+        <label>Night Brightness (Low)</label>
+        <input type="number" name="brightnessNightLow" value="%BRIGHTNESS_NIGHT_LOW%">
+
+        <hr class="divider">
+
+        <label>Day Luminosity Threshold</label>
+        <input type="number" name="thresholdLuxDay" value="%THRESHOLD_LUX_DAY%">
+        <label>Night Luminosity Threshold</label>
+        <input type="number" name="thresholdLuxNight" value="%THRESHOLD_LUX_NIGHT%">
+      </div>
+
+      <div id="display" class="tab">
+        <label>Clock Position</label>
+        <input type="number" name="positionClock" value="%POSITION_CLOCK%">
+
+        <hr class="divider">
+
+        <label>Clock Screen Duration (Seconds)</label>
+        <input type="number" name="screenClock" value="%SCREEN_CLOCK%">
+        <label>Date Screen Duration (Seconds)</label>
+        <input type="number" name="screenDate" value="%SCREEN_DATE%">
+        <label>Temperature Screen Duration (Seconds)</label>
+        <input type="number" name="screenTemp" value="%SCREEN_TEMP%">
+      </div>
+
+      <div id="sistema" class="tab">
+        <label>Sync Interval (Seconds)</label>
+        <input type="number" name="syncInterval" value="%SYNC_INTERVAL%">
+        <label>Temperature Read Interval (Seconds)</label>
+        <input type="number" name="tempReadInterval" value="%TEMP_INTERVAL%">
+
+        <hr class="divider">
+
+        <label>Time Offset (Seconds)</label>
+        <input type="number" name="timeOffset" value="%TIME_OFFSET%">
+      </div>
+
+      <div id="temperatura" class="tab">
+        <label>Temperature Offset</label>
+        <input type="number" name="tempOffset" value="%TEMP_OFFSET%">
+        <label>Humidity Offset</label>
+        <input type="number" name="humOffset" value="%HUM_OFFSET%">
+      </div>
+      
+      <hr class="divider">
+
+      <div class="setting-row">
+          <label for="enableDate">Enable Date Screen</label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="enableDate" name="enableDate" value="true" %ENABLE_DATE_CHECKED%>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <label for="enableSensors">Enable Temp/Hum Screen</label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="enableSensors" name="enableSensors" value="true" %ENABLE_SENSORS_CHECKED%>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+      <input type="submit" value="Save">
+    </form>
+  </main>
+
+  <script>
+    function openTab(tabName, title) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('aside nav button').forEach(b => b.classList.remove('active'));
+      document.getElementById(tabName).classList.add('active');
+
+      // highlight the corresponding button
+      const activeButton = document.getElementById("btn-" + tabName);
+      if (activeButton) activeButton.classList.add('active');
+
+      document.getElementById("main-title").textContent = title;
+
+      // Close the submenu if you click on another main menu section
+      if (!tabName.startsWith('colori')) {
+        document.querySelectorAll('.submenu.open').forEach(s => s.classList.remove('open'));
+      }
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('closed');
+    }
+
+    window.onload = () => {
+      const submenu = document.querySelector('.submenu');
+      submenu.classList.add('open');
+      openTab('colori-scritte', 'Colors - Text');
+    };
+
+
+    // Function to create an iro.js color picker
+    function createColorPicker(id, defaultColor, inputId) {
+      let colorPicker = new iro.ColorPicker("#" + id, {
+        width: 200,
+        color: defaultColor,
+        borderWidth: 2,
+        borderColor: "#333",
+        layoutDirection:"horizontal",
+        layout: [
+          { component: iro.ui.Wheel },
+          { component: iro.ui.Slider, options:{ sliderType: 'value' } }
+        ]
+      });
+
+      let input = document.getElementById(inputId);
+
+      colorPicker.on('color:change', function(color) {
+        input.value = color.hexString.toUpperCase();
+      });
+
+      input.addEventListener('input', () => {
+        if(/^#[0-9A-F]{6}$/i.test(input.value)) {
+          colorPicker.color.hexString = input.value;
+        }
+      });
+    }
+
+    // Initialize all pickers
+    createColorPicker("color-picker-background-timeDay", "%TIME_BACKGROUND_COLOR_DAY%", "timeColorDayBackground");
+    createColorPicker("color-picker-background-timeNight", "%TIME_BACKGROUND_COLOR_NIGHT%", "timeColorNightBackground");
+    createColorPicker("color-picker-timeDay", "%TIME_COLOR_DAY%", "timeColorDayText");
+    createColorPicker("color-picker-timeNight", "%TIME_COLOR_NIGHT%", "timeColorNightText");
+    
+    createColorPicker("color-picker-background-dateDay", "%DATE_BACKGROUND_COLOR_DAY%", "dateColorDayBackground");
+    createColorPicker("color-picker-background-dateNight", "%DATE_BACKGROUND_COLOR_NIGHT%", "dateColorNightBackground");
+    createColorPicker("color-picker-dateDay", "%DATE_COLOR_DAY%", "dateColorDayText");
+    createColorPicker("color-picker-dateNight", "%DATE_COLOR_NIGHT%", "dateColorNightText");
+
+    createColorPicker("color-picker-background-tempDay", "%TEMP_BACKGROUND_COLOR_DAY%", "tempColorDayBackground");
+    createColorPicker("color-picker-background-tempNight", "%TEMP_BACKGROUND_COLOR_NIGHT%", "tempColorNightBackground");
+    createColorPicker("color-picker-tempDay", "%TEMP_COLOR_DAY%", "tempColorDayText");
+    createColorPicker("color-picker-tempNight", "%TEMP_COLOR_NIGHT%", "tempColorNightText");
+
+    createColorPicker("color-picker-dayActiveDay", "%DAY_COLOR_DAY%", "dayColorTextDay");
+    createColorPicker("color-picker-dayInactiveDay", "%NOT_DAY_COLOR_DAY%", "notDayColorTextDay");
+    createColorPicker("color-picker-dayActiveNight", "%DAY_COLOR_NIGHT%", "dayColorTextNight");
+    createColorPicker("color-picker-dayInactiveNight", "%NOT_DAY_COLOR_NIGHT%", "notDayColorTextNight");
+
+
+    function toggleSubmenu() {
+      const submenu = document.querySelector('.submenu');
+      const isOpen = submenu.classList.contains('open');
+
+      // Close any other open submenus first
+      document.querySelectorAll('.submenu.open').forEach(s => s.classList.remove('open'));
+
+      // If it wasn't open, open it and show "Text"
+      if (!isOpen) {
+        submenu.classList.add('open');
+        openTab('colori-scritte', 'Colors - Text');
+      }
+    }
+
+
+  </script>
+</body>
+</html>
